@@ -31,7 +31,7 @@ def user_debug(print_str, print_value='', ):
 
 
 # 将通达信的日线文件转换成CSV格式保存函数。通达信数据文件32字节为一组。
-def day2csv(source_dir, file_name, target_dir):
+def day2csv(source_dir, file_name, name, target_dir):
     """
     将通达信的日线文件转换成CSV格式保存函数。通达信数据文件32字节为一组
     :param source_dir: str 源文件路径
@@ -57,8 +57,8 @@ def day2csv(source_dir, file_name, target_dir):
 
     if not os.path.isfile(target_path):
         # 目标文件不存在。写入表头行。begin从0开始转换
-        target_file = open(target_path, 'w', encoding="utf-8")  # 以覆盖写模式打开文件
-        header = str('date') + ',' + str('code') + ',' + str('open') + ',' + str('high') + ',' + str('low') + ',' \
+        target_file = open(target_path, 'w', encoding="gbk")  # 以覆盖写模式打开文件
+        header = str('date') + ',' + str('code') + ',' + str('name') + ',' + str('open') + ',' + str('high') + ',' + str('low') + ',' \
                  + str('close') + ',' + str('vol') + ',' + str('amount')
         target_file.write(header)
         begin = 0
@@ -110,6 +110,7 @@ def day2csv(source_dir, file_name, target_dir):
         file_name[2:-4]
         line = '\n' + str(a_date) + ',' \
                + file_name[2:-4] + ',' \
+               + name + ',' \
                + str(a[1] / 100.0) + ',' \
                + str(a[2] / 100.0) + ',' \
                + str(a[3] / 100.0) + ',' \
@@ -412,7 +413,7 @@ def make_fq(code, df_code, df_gbbq, df_cw='', start_date='', end_date='', fqtype
 
         data['date'] = data.index
         data['if_trade'].fillna(value=False, inplace=True)  # if_trade列，无效的值填充为False
-        data = data.fillna(method='ffill')  # 向下填充无效值
+        data = data.ffill()  # 向下填充无效值
 
         # 提取info表的'fenhong', 'peigu', 'peigujia',‘songzhuangu'列的值，按日期一一对应，列拼接到data表。
         # 也就是将当日是除权除息日的行，对应的除权除息数据，写入对应的data表的行。
@@ -545,8 +546,8 @@ def make_fq(code, df_code, df_gbbq, df_cw='', start_date='', end_date='', fqtype
     data = pd.concat([df_code, df_cqcx[['category']][df_code.index[0]:]], axis=1)
     # print(data)
 
-    data['if_trade'].fillna(value=False, inplace=True)  # if_trade列，无效的值填充为False
-    data.fillna(method='ffill', inplace=True)  # 向下填充无效值
+    data.fillna({"if_trade",False},inplace=True)  # if_trade列，无效的值填充为False
+    data.ffill(inplace=True)  # 向下填充无效值
 
     # 提取info表的'fenhong', 'peigu', 'peigujia',‘songzhuangu'列的值，按日期一一对应，列拼接到data表。
     # 也就是将当日是除权除息日的行，对应的除权除息数据，写入对应的data表的行。
@@ -598,8 +599,8 @@ def make_fq(code, df_code, df_gbbq, df_cw='', start_date='', end_date='', fqtype
     # df_ltg拼接回原DF
     data = pd.concat([data, df_ltg], axis=1)
 
-    data = data.fillna(method='ffill')  # 向下填充无效值
-    data = data.fillna(method='bfill')  # 向上填充无效值  为了弥补开始几行的空值
+    data = data.ffill()  # 向下填充无效值
+    data = data.bfill()  # 向上填充无效值  为了弥补开始几行的空值
     data = data.round({'open': 2, 'high': 2, 'low': 2, 'close': 2, })  # 指定列四舍五入
     if '流通股' in data.columns.to_list():
         data['流通市值'] = data['流通股'] * data['close']
@@ -744,9 +745,9 @@ def update_stockquote(code, df_history, df_today):
             df_today['date'] = now_date
         df_today.set_index('date', drop=False, inplace=True)
         df_today = df_today.rename(columns={'price': 'close'})
-        df_today = df_today[{'code', 'date', 'open', 'high', 'low', 'close', 'vol', 'amount'}]
+        df_today = df_today[['code', 'date', 'open', 'high', 'low', 'close', 'vol', 'amount']]
         result = pd.concat([df_history, df_today], axis=0, ignore_index=False)
-        result = result.fillna(method='ffill')  # 向下填充无效值
+        result = result.ffill()  # 向下填充无效值
         if '流通市值' and '换手率' in result.columns.tolist():
             result['流通市值'] = result['流通股'] * result['close']
             result = result.round({'流通市值': 2, })  # 指定列四舍五入
@@ -761,7 +762,7 @@ def update_stockquote(code, df_history, df_today):
 
 if __name__ == '__main__':
     stock_code = '600036'
-    day2csv(ucfg.tdx['tdx_path'] + '/vipdoc/sh/lday', 'sh' + stock_code + '.day', ucfg.tdx['csv_lday'])
+    day2csv(ucfg.tdx['tdx_path'] + '/vipdoc/sh/lday', 'sh' + stock_code + '.day', "", ucfg.tdx['csv_lday'])
     df_gbbq = pd.read_csv(ucfg.tdx['csv_gbbq'] + '/gbbq.csv', encoding='gbk', dtype={'code': str})
     df_bfq = pd.read_csv(ucfg.tdx['csv_lday'] + os.sep + stock_code + '.csv',
                          index_col=None, encoding='gbk', dtype={'code': str})

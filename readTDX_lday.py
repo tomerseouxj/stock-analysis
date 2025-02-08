@@ -64,33 +64,42 @@ def update_lday():
     # 读取通达信正常交易状态的股票列表。infoharbor_spec.cfg退市文件不齐全，放弃使用
     tdx_stocks = pd.read_csv(ucfg.tdx['tdx_path'] + '/T0002/hq_cache/infoharbor_ex.code',
                              sep='|', header=None, index_col=None, encoding='gbk', dtype={0: str})
+    # 把tdx_stocks第1列作为key，第列作为value创建字典
+    names = tdx_stocks.set_index(0).T.to_dict('list')
     file_listsh = tdx_stocks[0][tdx_stocks[0].apply(lambda x: x[0:1] == "6")]
     file_listsz = tdx_stocks[0][tdx_stocks[0].apply(lambda x: x[0:1] != "6")]
 
     print("从通达信深市股票导出数据")
     # file_list = os.listdir(ucfg.tdx['tdx_path'] + '/vipdoc/sz/lday')
     for f in tqdm(file_listsz):
+        key = f
         f = 'sz' + f + '.day'
         if os.path.exists(ucfg.tdx['tdx_path'] + '/vipdoc/sz/lday/' + f):  # 处理深市sh00开头和创业板sh30文件，否则跳过此次循环
             # print(time.strftime("[%H:%M:%S] 处理 ", time.localtime()) + f)
-            func.day2csv(ucfg.tdx['tdx_path'] + '/vipdoc/sz/lday', f, ucfg.tdx['csv_lday'])
+            func.day2csv(ucfg.tdx['tdx_path'] + '/vipdoc/sz/lday', f, names[key][0], ucfg.tdx['csv_lday'])
 
     print("从通达信导出沪市股票数据")
     # file_list = os.listdir(ucfg.tdx['tdx_path'] + '/vipdoc/sh/lday')
     for f in tqdm(file_listsh):
         # 处理沪市sh6开头文件，否则跳过此次循环
+        key = f
         f = 'sh' + f + '.day'
         if os.path.exists(ucfg.tdx['tdx_path'] + '/vipdoc/sh/lday/' + f):
             # print(time.strftime("[%H:%M:%S] 处理 ", time.localtime()) + f)
-            func.day2csv(ucfg.tdx['tdx_path'] + '/vipdoc/sh/lday', f, ucfg.tdx['csv_lday'])
+            func.day2csv(ucfg.tdx['tdx_path'] + '/vipdoc/sh/lday', f, names[key][0], ucfg.tdx['csv_lday'])
 
     print("从通达信导出指数数据")
     for i in tqdm(ucfg.index_list):
+        # 用切片取出股票代码，用于后续文件名
+        key = i[2:-4]
         # print(time.strftime("[%H:%M:%S] 处理 ", time.localtime()) + i)
+        name = names.get(key)
+        if name is None:
+            name=i
         if 'sh' in i:
-            func.day2csv(ucfg.tdx['tdx_path'] + '/vipdoc/sh/lday', i, ucfg.tdx['csv_index'])
+            func.day2csv(ucfg.tdx['tdx_path'] + '/vipdoc/sh/lday', i, name, ucfg.tdx['csv_index'])
         elif 'sz' in i:
-            func.day2csv(ucfg.tdx['tdx_path'] + '/vipdoc/sz/lday', i, ucfg.tdx['csv_index'])
+            func.day2csv(ucfg.tdx['tdx_path'] + '/vipdoc/sz/lday', i, name, ucfg.tdx['csv_index'])
 
 
 def qfq(file_list, df_gbbq, cw_dict, tqdm_position=None):
@@ -101,7 +110,7 @@ def qfq(file_list, df_gbbq, cw_dict, tqdm_position=None):
                              dtype={'code': str})
         df_qfq = func.make_fq(filename[:-4], df_bfq, df_gbbq, cw_dict)
         # lefttime_tick = int((time.time() - starttime_tick) / (file_list.index(filename) + 1) * (len(file_list) - (file_list.index(filename) + 1)))
-        if len(df_qfq) > 0:  # 返回值大于0，表示有更新
+        if True:#len(df_qfq) > 0:  # 返回值大于0，表示有更新
             df_qfq.to_csv(ucfg.tdx['csv_lday'] + os.sep + filename, index=False, encoding='gbk')
             df_qfq.to_pickle(ucfg.tdx['pickle'] + os.sep + filename[:-4] + '.pkl')
             tq.set_description(filename + "复权完成")

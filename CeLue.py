@@ -10,11 +10,11 @@ HHV/LLV/COUNT使用了rolling函数，性能极差，慎用。
 
 """
 import numpy as np
-import talib
 import time
 import func
 from func_TDX import rolling_window, REF, MA, SMA, HHV, LLV, COUNT, EXIST, CROSS, BARSLAST
 from rich import print
+import pandas as pd
 
 
 def 策略HS300(df_hs300, start_date='', end_date=''):
@@ -28,6 +28,7 @@ def 策略HS300(df_hs300, start_date='', end_date=''):
         start_date = df_hs300.index[0]  # 设置为df第一个日期
     if end_date == '':
         end_date = df_hs300.index[-1]  # 设置为df最后一个日期
+    df_hs300 = df_hs300.drop_duplicates("date",keep="first")
     df_hs300 = df_hs300.loc[start_date:end_date]
     HS300_CLOSE = df_hs300['close']
     HS300_当日涨幅 = (HS300_CLOSE / REF(HS300_CLOSE, 1) - 1) * 100
@@ -78,7 +79,7 @@ def 策略1(df, start_date='', end_date='', mode=None):
 
         # TJ04
         # {排除当日涨停的股票}
-        if df['code'][0][0:2] == "68" or df['code'][0][0:2] == "30":
+        if df['code'].iloc[0][0:2] == "68" or df['code'].iloc[0][0:2] == "30":
             TJ04_1 = 1.2
         else:
             TJ04_1 = 1.1
@@ -95,7 +96,7 @@ def 策略1(df, start_date='', end_date='', mode=None):
         TJ01 = (BARSLAST(C == 0) > 500) & (df['close'] > 9)
 
         # TJ04
-        if df['code'][0][0:2] == "68" or df['code'][0][0:2] == "30":
+        if df['code'].iloc[0][0:2] == "68" or df['code'].iloc[0][0:2] == "30":
             TJ04_1 = 1.2
         else:
             TJ04_1 = 1.1

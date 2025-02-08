@@ -12,6 +12,7 @@ from tqdm import tqdm
 import CeLue  # 个人策略文件，不分享
 import func
 import user_config as ucfg
+import talib
 
 # 配置部分
 
@@ -70,6 +71,7 @@ def load_dict_stock(stocklist):
     return dicttemp
 
 
+# ['date', 'code', 'open', 'high', 'low', 'close', 'vol', 'amount', 'adj','流通股', '流通市值', '换手率']
 def run_celue1(stocklist, df_today, tqdm_position=None):
     if 'single' in sys.argv[1:]:
         tq = tqdm(stocklist[:])
