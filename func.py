@@ -58,7 +58,7 @@ def day2csv(source_dir, file_name, name, target_dir):
     if not os.path.isfile(target_path):
         # 目标文件不存在。写入表头行。begin从0开始转换
         target_file = open(target_path, 'w', encoding="gbk")  # 以覆盖写模式打开文件
-        header = str('date') + ',' + str('code') + ',' + str('name') + ',' + str('open') + ',' + str('high') + ',' + str('low') + ',' \
+        header = str('date') + ',' + str('code') + ',' + str('open') + ',' + str('high') + ',' + str('low') + ',' \
                  + str('close') + ',' + str('vol') + ',' + str('amount')
         target_file.write(header)
         begin = 0
@@ -110,7 +110,6 @@ def day2csv(source_dir, file_name, name, target_dir):
         file_name[2:-4]
         line = '\n' + str(a_date) + ',' \
                + file_name[2:-4] + ',' \
-               + name + ',' \
                + str(a[1] / 100.0) + ',' \
                + str(a[2] / 100.0) + ',' \
                + str(a[3] / 100.0) + ',' \
@@ -545,8 +544,7 @@ def make_fq(code, df_code, df_gbbq, df_cw='', start_date='', end_date='', fqtype
     # 提取df_cqcx和df_gbbq表的category列的值，按日期一一对应，列拼接到bfq_data表。也就是标识出当日是股本变迁的行
     data = pd.concat([df_code, df_cqcx[['category']][df_code.index[0]:]], axis=1)
     # print(data)
-
-    data.fillna({"if_trade",False},inplace=True)  # if_trade列，无效的值填充为False
+    data["is_trade"] = data["if_trade"].fillna(False)
     data.ffill(inplace=True)  # 向下填充无效值
 
     # 提取info表的'fenhong', 'peigu', 'peigujia',‘songzhuangu'列的值，按日期一一对应，列拼接到data表。

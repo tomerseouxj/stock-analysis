@@ -248,4 +248,10 @@ if __name__ == '__main__':
 
     # 结果
     print(f'全部完成 共用时 {(time.time() - starttime):>.2f} 秒 已选出 {len(stocklist)} 只股票:')
-    print(stocklist)
+    # print(stocklist)
+    tdx_stocks = pd.read_csv(ucfg.tdx['tdx_path'] + '/T0002/hq_cache/infoharbor_ex.code',
+                             sep='|', header=None, index_col=None, encoding='gbk', dtype={0: str})
+    # 把tdx_stocks第1列作为key，第列作为value创建字典
+    names = tdx_stocks.set_index(0).T.to_dict('list')
+    for i in stocklist:
+        print(f'{i} {names[i][0]}')

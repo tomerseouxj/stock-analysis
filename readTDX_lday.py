@@ -64,8 +64,6 @@ def update_lday():
     # 读取通达信正常交易状态的股票列表。infoharbor_spec.cfg退市文件不齐全，放弃使用
     tdx_stocks = pd.read_csv(ucfg.tdx['tdx_path'] + '/T0002/hq_cache/infoharbor_ex.code',
                              sep='|', header=None, index_col=None, encoding='gbk', dtype={0: str})
-    # 把tdx_stocks第1列作为key，第列作为value创建字典
-    names = tdx_stocks.set_index(0).T.to_dict('list')
     file_listsh = tdx_stocks[0][tdx_stocks[0].apply(lambda x: x[0:1] == "6")]
     file_listsz = tdx_stocks[0][tdx_stocks[0].apply(lambda x: x[0:1] != "6")]
 
